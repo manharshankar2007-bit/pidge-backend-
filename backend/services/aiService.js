@@ -1,31 +1,22 @@
-const OLLAMA_URL = "http://localhost:11434/api/generate";
-const MODEL = "qwen3:8b";
+const Groq = require("groq-sdk");
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 async function generate(prompt) {
-  const response = await fetch(OLLAMA_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      prompt,
-      stream: false,
-      options: {
-        temperature: 0.2,
-        top_p: 0.9,
-        num_predict: 2048,
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.2,
+    messages: [
+      {
+        role: "user",
+        content: prompt,
       },
-    }),
+    ],
   });
 
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-
-  const data = await response.json();
-
-  return data.response.trim();
+  return completion.choices[0].message.content.trim();
 }
 
 module.exports = {
