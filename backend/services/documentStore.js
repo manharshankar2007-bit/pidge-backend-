@@ -1,7 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { readDocument } = require("./documentReader");
-const { createEmbedding } = require("./embeddings");
+
 const { splitIntoChunks } = require("./chunker");
 
 const DOCUMENTS_DIR = path.join(__dirname, "..", "documents");
@@ -35,16 +35,13 @@ async function loadDocuments() {
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
 
-      const embedding = await createEmbedding(chunk);
-
-      documents.push({
-        filename: doc.filename,
-        fileType: doc.fileType,
-        chunkIndex: i,
-        totalChunks: chunks.length,
-        text: chunk,
-        embedding,
-      });
+   documents.push({
+  filename: doc.filename,
+  fileType: doc.fileType,
+  chunkIndex: i,
+  totalChunks: chunks.length,
+  text: chunk,
+});
     }
   }
 

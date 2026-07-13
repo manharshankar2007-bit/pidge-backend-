@@ -1,43 +1,41 @@
 const { getAllDocuments } = require("./documentStore");
-const { createEmbedding } = require("./embeddings");
 
-function cosineSimilarity(a, b) {
-  let dot = 0;
-  let magA = 0;
-  let magB = 0;
+function scoreDocument(query, text) {
+  const queryWords = query
+    .toLowerCase()
+    .split(/\W+/)
+    .filter(w => w.length > 2);
 
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    magA += a[i] * a[i];
-    magB += b[i] * b[i];
+  const documentText = text.toLowerCase();
+
+  let score = 0;
+
+  for (const word of queryWords) {
+    const matches = documentText.match(new RegExp(word, "g"));
+    if (matches) {
+      score += matches.length;
+    }
   }
 
-  magA = Math.sqrt(magA);
-  magB = Math.sqrt(magB);
-
-  if (magA === 0 || magB === 0) return 0;
-
-  return dot / (magA * magB);
+  return score;
 }
 
 async function searchDocuments(query) {
   const documents = getAllDocuments();
 
-  if (documents.length === 0) {
+  if (!documents.length) {
     return [];
   }
 
-  const queryEmbedding = await createEmbedding(query);
+  const scored = documents
+    .map(doc => ({
+      ...doc,
+      score: scoreDocument(query, doc.text)
+    }))
+    .filter(doc => doc.score > 0);
 
-  const scored = documents.map((doc) => ({
-    ...doc,
-    score: cosineSimilarity(queryEmbedding, doc.embedding),
-  }));
-
-  // Highest similarity first
   scored.sort((a, b) => b.score - a.score);
 
-  // Remove duplicate chunks from the same document
   const uniqueDocuments = [];
   const seen = new Set();
 
